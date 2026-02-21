@@ -1,0 +1,293 @@
+name: review-fix-and-merge
+description: レビュー＋修正ピース - 問題があれば修正し、最終的に APPROVE なら PR をマージ、REJECT なら失敗終了
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 25
+initial_movement: reviewers
+movements:
+  - name: implement
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    instruction: implement
+    rules:
+      - condition: 実装が完了した
+        next: reviewers
+      - condition: 実装を進行できない
+        next: reject-pr
+      - condition: ユーザーへの確認事項があるためユーザー入力が必要
+        next: implement
+        requires_user_input: true
+        interactive_only: true
+    output_contracts:
+      report:
+        - name: coder-scope.md
+          format: coder-scope
+        - name: coder-decisions.md
+          format: coder-decisions
+
+  - name: reviewers
+    parallel:
+      - name: ai_review
+        edit: false
+        persona: ai-antipattern-reviewer
+        policy:
+          - review
+          - ai-antipattern
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        instruction: review-ai
+        rules:
+          - condition: AI特有の問題なし
+          - condition: AI特有の問題あり
+        output_contracts:
+          report:
+            - name: 03-ai-review.md
+              format: ai-review
+      - name: supervise
+        edit: false
+        persona: supervisor
+        policy: review
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Bash
+          - WebSearch
+          - WebFetch
+        instruction: supervise
+        rules:
+          - condition: すべて問題なし
+          - condition: 要求未達成、テスト失敗、ビルドエラー
+        output_contracts:
+          report:
+            - name: supervisor-validation.md
+              format: supervisor-validation
+            - name: summary.md
+              format: summary
+              use_judge: false
+    rules:
+      - condition: all("AI特有の問題なし", "すべて問題なし")
+        next: merge-pr
+      - condition: all("AI特有の問題あり", "要求未達成、テスト失敗、ビルドエラー")
+        next: fix_both
+      - condition: any("AI特有の問題あり")
+        next: ai_fix
+      - condition: any("要求未達成、テスト失敗、ビルドエラー")
+        next: supervise_fix
+
+  - name: fix_both
+    parallel:
+      - name: ai_fix_parallel
+        edit: true
+        persona: coder
+        policy:
+          - coding
+          - testing
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Bash
+          - WebSearch
+          - WebFetch
+        required_permission_mode: edit
+        rules:
+          - condition: AI問題の修正完了
+          - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
+          - condition: 判断できない、情報不足
+        instruction: ai-fix
+      - name: supervise_fix_parallel
+        edit: true
+        persona: coder
+        policy:
+          - coding
+          - testing
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - Edit
+          - Bash
+          - WebSearch
+          - WebFetch
+        required_permission_mode: edit
+        rules:
+          - condition: 監督者の指摘に対する修正が完了した
+          - condition: 修正を進行できない
+        instruction: fix-supervisor
+    rules:
+      - condition: all("AI問題の修正完了", "監督者の指摘に対する修正が完了した")
+        next: reviewers
+      - condition: any("修正不要（指摘対象ファイル/仕様の確認済み）", "判断できない、情報不足", "修正を進行できない")
+        next: implement
+
+  - name: ai_fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    rules:
+      - condition: AI問題の修正完了
+        next: reviewers
+      - condition: 修正不要（指摘対象ファイル/仕様の確認済み）
+        next: implement
+      - condition: 判断できない、情報不足
+        next: implement
+    instruction: ai-fix
+
+  - name: supervise_fix
+    edit: true
+    persona: coder
+    policy:
+      - coding
+      - testing
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Edit
+      - Write
+      - Bash
+      - WebSearch
+      - WebFetch
+    required_permission_mode: edit
+    pass_previous_response: false
+    rules:
+      - condition: 監督者の指摘に対する修正が完了した
+        next: reviewers
+      - condition: 修正を進行できない
+        next: implement
+    instruction: fix-supervisor
+
+  - name: merge-pr
+    edit: false
+    persona: pr-commenter
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+    rules:
+      - condition: マージ完了
+        next: COMPLETE
+      - condition: マージ失敗
+        next: ABORT
+    instruction_template: |
+      ## レビューサマリー
+      {previous_response}
+
+      全レビューで APPROVE 判定が出ました。PRにレビューサマリーをコメントし、マージしてください。
+
+      **手順:**
+      1. タスク説明からPR番号を抽出する
+      2. Report Directory内のレビューレポートを読む（存在するもの）:
+         - `03-ai-review.md`
+         - `supervisor-validation.md`
+         - `summary.md`
+      3. PRにレビューサマリーをコメントとして投稿:
+         ```
+         gh pr comment <PR番号> --body "## ✅ 自動レビュー: APPROVE
+
+         <レビュー結果の要約>
+
+         修正が行われた場合はその内容も記載。
+
+         ---
+         *takt review-fix-and-merge ピースで自動レビュー・修正・マージ*"
+         ```
+      4. PRをスカッシュマージする:
+         ```
+         gh pr merge <PR番号> --squash --delete-branch
+         ```
+      5. マージが成功したら condition: "マージ完了" を選択
+      6. マージが失敗したら condition: "マージ失敗" を選択（エラー内容を報告）
+
+      **注意:**
+      - `gh` コマンドが失敗した場合、エラーメッセージをそのまま報告する
+      - マージコンフリクトがある場合は無理にマージしない
+      - `--delete-branch` でマージ後のブランチを自動削除する
+
+  - name: reject-pr
+    edit: false
+    persona: pr-commenter
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+    rules:
+      - condition: コメント投稿完了
+        next: ABORT
+      - condition: コメント投稿失敗
+        next: ABORT
+    instruction_template: |
+      ## レビューサマリー
+      {previous_response}
+
+      修正を試みましたが、問題を解決できませんでした。
+      PRに問題点をコメントし、タスクを失敗終了させてください。
+
+      **手順:**
+      1. タスク説明からPR番号を抽出する
+      2. Report Directory内の全レビューレポートを読む
+      3. PRに問題点と修正試行の結果をコメントとして投稿:
+         ```
+         gh pr comment <PR番号> --body "## ❌ 自動レビュー＋修正: REJECT
+
+         ### 修正を試みた結果
+         <修正を試みたが解決できなかった問題の詳細>
+
+         ### 残存する問題点
+         <各レビューから Critical/High の問題を列挙>
+
+         ### 次のアクション
+         以下のいずれかで対応してください:
+
+         **追加条件を指定して再実行:**
+         \`\`\`
+         takt run --piece review-fix-and-merge \"PR #<番号> のコメントを読んだが、このように修正すればOK: ...\"
+         \`\`\`
+
+         **PRをクローズ:**
+         \`\`\`
+         takt run --piece close-pr \"PR #<番号> を閉じる。理由: ...\"
+         \`\`\`
+
+         ---
+         *takt review-fix-and-merge ピースで自動レビュー・修正*"
+         ```
+      4. condition: "コメント投稿完了" を選択（ABORTでタスク失敗扱い）

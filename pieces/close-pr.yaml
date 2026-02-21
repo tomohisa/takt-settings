@@ -1,0 +1,52 @@
+name: close-pr
+description: PRをクローズするピース - 理由をコメントしてPRを閉じる
+piece_config:
+  provider_options:
+    codex:
+      network_access: true
+    opencode:
+      network_access: true
+max_movements: 3
+initial_movement: close
+movements:
+  - name: close
+    edit: false
+    persona: pr-commenter
+    allowed_tools:
+      - Read
+      - Glob
+      - Grep
+      - Bash
+    rules:
+      - condition: クローズ完了
+        next: COMPLETE
+      - condition: クローズ失敗
+        next: ABORT
+    instruction_template: |
+      {previous_response}
+
+      指定されたPRをクローズしてください。
+
+      **手順:**
+      1. タスク説明からPR番号とクローズ理由を抽出する
+      2. PRにクローズ理由をコメントとして投稿:
+         ```
+         gh pr comment <PR番号> --body "## 🚫 PR クローズ
+
+         ### 理由
+         <ユーザーが指定したクローズ理由>
+
+         ---
+         *takt close-pr ピースで自動クローズ*"
+         ```
+      3. PRをクローズする:
+         ```
+         gh pr close <PR番号>
+         ```
+      4. クローズが成功したら condition: "クローズ完了" を選択
+      5. クローズが失敗したら condition: "クローズ失敗" を選択（エラー内容を報告）
+
+      **注意:**
+      - PR番号が見つからない場合はエラーを報告してABORTする
+      - 既にクローズ済みの場合はその旨を報告してCOMPLETE扱いにする
+      - `--delete-branch` は付けない（ブランチは残す）

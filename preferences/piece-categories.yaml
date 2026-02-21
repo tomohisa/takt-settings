@@ -1,0 +1,34 @@
+piece_categories:
+  🚀 クイックスタート:
+    pieces:
+      - default
+      - passthrough
+      - coding
+      - minimal
+      - compound-eye
+  🔍 レビュー:
+    pieces:
+      - review-fix-minimal
+      - review-only
+      - unit-test
+  🔀 レビュー＆マージ:
+    pieces:
+      - review-only-and-merge
+      - review-fix-and-merge
+      - close-pr
+  🎨 フロントエンド: {}
+  ⚙️ バックエンド: {}
+  🔧 エキスパート:
+    フルスタック:
+      pieces:
+        - expert
+        - expert-cqrs
+    リファクタリング:
+      pieces:
+        - structural-reform
+  その他:
+    pieces:
+      - research
+      - magi
+show_others_category: true
+others_category_name: その他

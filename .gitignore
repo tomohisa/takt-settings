@@ -1,0 +1,13 @@
+# takt runtime files
+logs/
+runs/
+worktrees/
+.takt-worktrees/
+
+# OS files
+.DS_Store
+
+# Editor
+.vscode/
+
+# node_modules inside submodule handled by submodule's own .gitignore

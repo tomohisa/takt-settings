@@ -1,0 +1,40 @@
+language: ja
+default_piece: default
+log_level: info
+provider: claude
+minimal_output: false
+interactive_preview_movements: 3
+concurrency: 3
+prevent_sleep: true
+
+persona_provider:
+  # codex - 設計判断が必要なコーディング系
+  coder: codex
+  architect-planner: codex
+  security-reviewer: codex
+  balthasar: codex
+  # codex/spark - スピード重視（思考の質より速度）
+  test-planner:
+    provider: codex
+    model: spark
+  frontend-reviewer:
+    provider: codex
+    model: spark
+  pr-commenter:
+    provider: codex
+    model: spark
+  research-digger:
+    provider: codex
+    model: spark
+  # claude - 空気を読む系
+  planner: claude
+  supervisor: claude
+  architecture-reviewer: claude
+  expert-supervisor: claude
+  research-planner: claude
+  research-supervisor: claude
+  melchior: claude
+  # opencode - 別視点
+  ai-antipattern-reviewer: opencode
+  qa-reviewer: opencode
+  casper: opencode

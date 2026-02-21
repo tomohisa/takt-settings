@@ -1,0 +1,3 @@
+[submodule "takt"]
+	path = takt
+	url = https://github.com/nrslib/takt.git
