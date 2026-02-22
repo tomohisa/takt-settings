@@ -44,6 +44,25 @@ movements:
 
   - name: reviewers
     parallel:
+      - name: arch-review
+        edit: false
+        persona: architecture-reviewer
+        policy: review
+        knowledge: architecture
+        allowed_tools:
+          - Read
+          - Glob
+          - Grep
+          - WebSearch
+          - WebFetch
+        rules:
+          - condition: approved
+          - condition: needs_fix
+        instruction: review-arch
+        output_contracts:
+          report:
+            - name: 01-architect-review.md
+              format: architecture-review
       - name: ai_review
         edit: false
         persona: ai-antipattern-reviewer
@@ -87,13 +106,13 @@ movements:
               format: summary
               use_judge: false
     rules:
-      - condition: all("AI特有の問題なし", "すべて問題なし")
+      - condition: all("approved", "AI特有の問題なし", "すべて問題なし")
         next: merge-pr
       - condition: all("AI特有の問題あり", "要求未達成、テスト失敗、ビルドエラー")
         next: fix_both
       - condition: any("AI特有の問題あり")
         next: ai_fix
-      - condition: any("要求未達成、テスト失敗、ビルドエラー")
+      - condition: any("needs_fix", "要求未達成、テスト失敗、ビルドエラー")
         next: supervise_fix
 
   - name: fix_both
