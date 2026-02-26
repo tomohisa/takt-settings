@@ -4,7 +4,7 @@ log_level: info
 provider: claude
 minimal_output: false
 interactive_preview_movements: 3
-concurrency: 3
+concurrency: 1
 prevent_sleep: true
 auto_fetch: true
 base_branch: main
