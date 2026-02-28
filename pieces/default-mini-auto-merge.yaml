@@ -286,6 +286,7 @@ movements:
       - Glob
       - Grep
       - Bash
+    required_permission_mode: edit
     rules:
       - condition: マージ完了
         next: COMPLETE
