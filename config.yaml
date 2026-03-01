@@ -9,31 +9,45 @@ prevent_sleep: true
 auto_fetch: true
 base_branch: main
 
-# --- 元の persona_provider 設定（一時的に全て copilot に変更） ---
-# persona_provider:
-#   coder: codex
-#   architect-planner: codex
-#   security-reviewer: codex
-#   balthasar: codex
-#   test-planner:
-#     provider: codex
-#     model: spark
-#   frontend-reviewer:
-#     provider: codex
-#     model: spark
-#   pr-commenter:
-#     provider: codex
-#     model: spark
-#   research-digger:
-#     provider: codex
-#     model: spark
-#   planner: claude
-#   supervisor: claude
-#   architecture-reviewer: claude
-#   expert-supervisor: claude
-#   research-planner: claude
-#   research-supervisor: claude
-#   melchior: claude
-#   ai-antipattern-reviewer: opencode
-#   qa-reviewer: opencode
-#   casper: opencode
+# --- Copilot-only persona_providers (model differentiation) ---
+# デフォルト (指定なし) → GPT-5.3 (Copilot CLIデフォルト)
+# Speed系: 高速・低コスト → claude-haiku-4.5
+# persona_providers:
+  # --- 元の設定 (マルチプロバイダー) ---
+  # coder: codex
+  # architect-planner: codex
+  # security-reviewer: codex
+  # balthasar: codex
+  # test-planner:
+  #   provider: codex
+  #   model: spark
+  # frontend-reviewer:
+  #   provider: codex
+  #   model: spark
+  # pr-commenter:
+  #   provider: codex
+  #   model: spark
+  # research-digger:
+  #   provider: codex
+  #   model: spark
+  # planner: claude
+  # supervisor: claude
+  # architecture-reviewer: claude
+  # expert-supervisor: claude
+  # research-planner: claude
+  # research-supervisor: claude
+  # melchior: claude
+  # ai-antipattern-reviewer: opencode
+  # qa-reviewer: opencode
+  # casper: opencode
+  # --- ここまで元の設定 ---
+  # 全ペルソナ: デフォルト (GPT-5.3) を使用
+  # Haiku は create-pr/merge-pr 等の複雑な指示に対応できないため無効化
+  # test-planner:
+  #   model: claude-haiku-4.5
+  # frontend-reviewer:
+  #   model: claude-haiku-4.5
+  # pr-commenter:
+  #   model: claude-haiku-4.5
+  # research-digger:
+  #   model: claude-haiku-4.5
