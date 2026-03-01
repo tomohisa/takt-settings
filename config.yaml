@@ -12,7 +12,7 @@ base_branch: main
 # --- Copilot-only persona_providers (model differentiation) ---
 # デフォルト (指定なし) → GPT-5.3 (Copilot CLIデフォルト)
 # Speed系: 高速・低コスト → claude-haiku-4.5
-persona_providers:
+# persona_providers:
   # --- 元の設定 (マルチプロバイダー) ---
   # coder: codex
   # architect-planner: codex
@@ -41,12 +41,13 @@ persona_providers:
   # qa-reviewer: opencode
   # casper: opencode
   # --- ここまで元の設定 ---
-  # Speed系 (高速・低コスト)
-  test-planner:
-    model: claude-haiku-4.5
-  frontend-reviewer:
-    model: claude-haiku-4.5
-  pr-commenter:
-    model: claude-haiku-4.5
-  research-digger:
-    model: claude-haiku-4.5
+  # 全ペルソナ: デフォルト (GPT-5.3) を使用
+  # Haiku は create-pr/merge-pr 等の複雑な指示に対応できないため無効化
+  # test-planner:
+  #   model: claude-haiku-4.5
+  # frontend-reviewer:
+  #   model: claude-haiku-4.5
+  # pr-commenter:
+  #   model: claude-haiku-4.5
+  # research-digger:
+  #   model: claude-haiku-4.5
