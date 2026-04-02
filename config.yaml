@@ -1,8 +1,8 @@
 language: ja
-default_piece: default
-log_level: info
 provider: claude
 minimal_output: false
+logging:
+  level: info
 interactive_preview_movements: 3
 concurrency: 1
 prevent_sleep: true
@@ -19,18 +19,10 @@ persona_providers:
   architect-planner: codex
   security-reviewer: codex
   balthasar: codex
-  test-planner:
-    provider: codex
-    model: spark
-  frontend-reviewer:
-    provider: codex
-    model: spark
-  pr-commenter:
-    provider: codex
-    model: spark
-  research-digger:
-    provider: codex
-    model: spark
+  test-planner: codex
+  frontend-reviewer: codex
+  pr-commenter: codex
+  research-digger: codex
   # Copilot (別視点レビュー)
   ai-antipattern-reviewer: copilot
   qa-reviewer: copilot
